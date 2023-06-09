@@ -22,6 +22,8 @@ def process_files():
     template_file = request.files['templateFile']
     candidate_files = request.files.getlist('candidateFiles')
 
+    session.clear()
+
     # Create a unique folder to store the uploaded files
     upload_path = UPLOAD_FOLDER
     if os.path.exists(upload_path) and os.path.isdir(upload_path):

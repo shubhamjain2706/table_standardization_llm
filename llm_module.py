@@ -8,7 +8,7 @@ from classes import Candidate
 
 
 # Globals
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = ""  # ADD YOUR KEY HERE
 COLS_MAPPING_ASK_TEXT_TEMPLATE = Template(f"Find only the closest mapping of all column names in '$to_cols' and "
                                           f"'$from_cols' and not the code. In case of ambiguous mappings, "
                                           f"keep them all. Return valid JSON dict and nothing else, with key as "
@@ -19,8 +19,9 @@ DATA_CONVERSION_ASK_TEXT_TEMPLATE = Template(f"Return code for converting data f
                                              f"should take single dataframe and return the converted dataframe. The "
                                              f"function should be self sufficient. Include imports inside the "
                                              f"function. Do not hard code, for columns with no conversion required "
-                                             f"return the value. Function name should be called $function_name. Do not "
-                                             f"invoke the function, the text should only contain required function.")
+                                             f"return the value. Function name should be called $function_name."
+                                             f"Assume column are of simple data types. Perform conversion to complex type like datetime as requied."
+                                             f"Do not invoke the function, the text should only contain required function.")
 
 
 # Step 1 : Extract information about the columns of the Template table and tables A and B in the format of a text
@@ -137,11 +138,13 @@ def transform_verify_save_data(input_candidates: list[Candidate]) -> list[Candid
     for i in range(len(input_candidates)):
         candidate_select_cols = input_candidates[i].cols_mapping.values()
         candidate_data = pd.read_csv(input_candidates[i].input_path)[candidate_select_cols]
+        candidate_data = candidate_data.rename(columns={v:k for k,v in input_candidates[i].cols_mapping.items()})
         function_name = f"convert_candidate{i}_df"
         try:
             if input_candidates[i].data_conversion_code:
-                exec(input_candidates[i].data_conversion_code)
+                exec(input_candidates[i].data_conversion_code.strip())
                 converted_candidate_data = eval(f"{function_name}({candidate_data})")
+                print(converted_candidate_data.head())
                 converted_candidate_data.to_csv(input_candidates[i].output_path, index=False)
                 flag = 1
             else:
