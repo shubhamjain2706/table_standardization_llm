@@ -8,8 +8,7 @@ from classes import Candidate
 
 
 # Globals
-OPENAI_API_KEY = "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"  # siddharth
-# OPENAI_API_KEY = "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"  # shubham
+OPENAI_API_KEY = "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"
 COLS_MAPPING_ASK_TEXT_TEMPLATE = Template(f"Find only the closest mapping of all column names in '$to_cols' and "
                                           f"'$from_cols' and not the code. In case of ambiguous mappings, "
                                           f"keep them all. Return valid JSON dict and nothing else, with key as "
