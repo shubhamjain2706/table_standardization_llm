@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test task Zero LLM Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .boundary-table {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .inner-table {
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .file-input {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .code-converted-files {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .final-files {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Test task Zero LLM Interface</h1>
+
+        <div class="form-group">
+            <label for="templateFile">Select the template file:</label>
+            <input type="file" id="templateFile" class="file-input">
+        </div>
+
+        <div class="form-group">
+            <label for="candidateFiles">Select the candidate files:</label>
+            <input type="file" id="candidateFiles" class="file-input" multiple>
+        </div>
+
+        <button id="processBtn" class="btn">Process Files</button>
+
+        <form id="cols_mapping_form" class="hidden">
+            {% for candidate, mapping in mappings.items() %}
+            <div>
+                <h4>Column Mapping for file: {{ candidate }}</h4>
+                {% for column, aliases in mapping.items() %}
+                <table class="boundary-table">
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Aliases</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ column }}</td>
+                            <td>
+                                <table class="sub-table">
+                                    {% for alias in aliases %}
+                                    <tr>
+                                        <td>
+                                            <table class="inner-table">
+                                                <tr>
+                                                    <td>
+                                                        <input type="radio" name="{{ template_file_name }}::{{ column }}" value="{{ candidate }}::{{ alias }}" id="mapping_selections">
+                                                        <label>{{ alias }}</label>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn" id="submitBtn">Submit Mapping</button>
+        </form>
+
+        <div class="code-converted-files" id="code_conversion_urls">
+            <h4>Download and Review the Code Conversion Files:</h4>
+            <ul id="outputList"></ul>
+
+            <div class="form-group">
+                <label for="codeConversionFiles">Upload the finalised code conversion files:</label>
+                <input type="file" id="codeConversionFiles" class="file-input" multiple>
+            </div>
+
+            <h4>Start the code conversion. Do not rename the files.</h4>
+            <button id="codeConversionProcessBtn" class="btn">Upload & Convert</button>
+        </div>
+
+        <div class="final-files" id="final_files">
+            <h4>Download Final Converted Files:</h4>
+            <ul id="finalOutputList"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Function to handle file processing
+        function processFiles(event) {
+            const templateFile = document.getElementById('templateFile').files[0];
+            const candidateFiles = document.getElementById('candidateFiles').files;
+
+            if (!templateFile || candidateFiles.length === 0) {
+                alert('Please select both the template file and candidate files.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('templateFile', templateFile);
+
+            for (let i = 0; i < candidateFiles.length; i++) {
+                formData.append('candidateFiles', candidateFiles[i]);
+            }
+
+            // Send the files to the server for processing
+            fetch('/process', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var form = document.getElementById("cols_mapping_form");
+                    form.style.display = "block";            
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred: ' + error.message);
+                });
+        }
+
+        // Event listener for process button click
+        const processBtn = document.getElementById('processBtn');
+        processBtn.addEventListener('click', processFiles);
+
+        document.getElementById("cols_mapping_form").addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+
+            var formData = new FormData(this);
+            var radioInputs = document.querySelectorAll('#radioOptions input[type="radio"]');
+            radioInputs.forEach(function (input) {
+                formData.append(input.name, input.value);
+            });
+
+            console.log('FormData:', formData);
+
+            fetch('/process_form', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                // Handle the response data
+                var div = document.getElementById("code_conversion_urls");
+                div.style.display = "block";
+                const outputList = document.getElementById('outputList');
+                    outputList.innerHTML = '';
+
+                    data.outputFiles.forEach(file => {
+                        const listItem = document.createElement('li');
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = file.downloadUrl;
+                        downloadLink.download = file.filename;
+                        downloadLink.textContent = file.filename;
+                        listItem.appendChild(downloadLink);
+                        outputList.appendChild(listItem);
+                    });
+                console.log('Response:', data);
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('An error occurred: ' + error.message);
+            });
+        });
+
+        // Function to handle file conversion
+        function uploadAndConvertFiles(event) {
+            const codeConversionFiles = document.getElementById('codeConversionFiles').files;
+
+            if (codeConversionFiles.length === 0) {
+                alert('Please select the codeConversionFiles files.');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let i = 0; i < codeConversionFiles.length; i++) {
+                formData.append('codeConversionFiles', codeConversionFiles[i]);
+            }
+
+            // Send the files to the server for processing
+            fetch('/upload_and_convert', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var div = document.getElementById("final_files");
+                    div.style.display = "block"; 
+                    const finalOutputList = document.getElementById('finalOutputList');
+                    finalOutputList.innerHTML = '';
+
+                    data.outputFiles.forEach(file => {
+                        const listItem = document.createElement('li');
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = file.downloadUrl;
+                        downloadLink.download = file.filename;
+                        downloadLink.textContent = file.filename;
+                        listItem.appendChild(downloadLink);
+                        finalOutputList.appendChild(listItem);
+                    });
+                    console.log('Response:', data);           
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred: ' + error.message);
+                });
+        }
+
+        // Event listener for conversion button click
+        const conversionBtn = document.getElementById('codeConversionProcessBtn');
+        conversionBtn.addEventListener('click', uploadAndConvertFiles);
+    </script>
+</body>
+
+</html>
