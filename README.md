@@ -2,8 +2,8 @@
 
 To access the project hosted on the server, go to: http://shubhamjain2706.pythonanywhere.com/
 
-Name: Shubham Kumar Jain
-Email: shubham.jain2706@gmail.com
+* Name: Shubham Kumar Jain
+* Email: shubham.jain2706@gmail.com
 
 File structure:
 1. flask_app.py: main server file.
