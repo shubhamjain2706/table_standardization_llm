@@ -68,9 +68,9 @@ def process_form():
     template_file_name = ""
     for column, alias in request.form.items():
         template_file_name = column.split("::")[0]
-        actual_col = column.split("::")[1]
-        file_name = alias.split("::")[0]
-        col_alias = alias.split("::")[1]
+        actual_col = column.split("::")[2]
+        file_name = column.split("::")[1]
+        col_alias = alias
         if file_name not in column_aliases.keys():
             column_aliases[file_name] = {}
         column_aliases[file_name][actual_col] = col_alias
