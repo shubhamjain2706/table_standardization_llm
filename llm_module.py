@@ -8,20 +8,27 @@ from classes import Candidate
 
 
 # Globals
-OPENAI_API_KEY = ""  # ADD YOUR OPENAI API KEY HERE
+OPENAI_API_KEY = ""  # YOUR OPENAI API KEY
 COLS_MAPPING_ASK_TEXT_TEMPLATE = Template(f"Find only the closest mapping of all column names in '$to_cols' and "
                                           f"'$from_cols' and not the code. In case of ambiguous mappings, "
                                           f"keep them all. Return valid JSON dict and nothing else, with key as "
                                           f"column name from $to_cols and value as list of mappings to $from_cols. "
                                           f"Use double quotes in JSON.")
-DATA_CONVERSION_ASK_TEXT_TEMPLATE = Template(f"Return code for converting data from '$from_data' to '$to_data'. Write "
+DATA_CONVERSION_ASK_TEXT_TEMPLATE = Template(f"Return code for converting data from candidate table to template table. Write "
                                              f"single function to convert pandas df to another. Conversion function "
                                              f"should take single dataframe and return the converted dataframe. The "
                                              f"function should be self sufficient. Include imports inside the "
                                              f"function. Do not hard code, for columns with no conversion required "
                                              f"return the value. Function name should be called $function_name."
-                                             f"Assume column are of simple data types. Perform conversion to complex type like datetime as requied."
-                                             f"Do not invoke the function, the text should only contain required function.")
+                                             f"Take into account the column data types. Perform conversion to complex type like datetime as required."
+                                             f"Do not invoke the function, the text should only contain required function."
+                                             f"Candidate table:\n"
+                                             f"$from_data\n"
+                                             f"Candidate data types:\n $from_dtypes\n"
+                                             f"Template table:\n"
+                                             f"$to_data:\n"
+                                             f"Template data types:\n$to_dtypes\n"
+                                             )
 
 
 # Step 1 : Extract information about the columns of the Template table and tables A and B in the format of a text
@@ -97,7 +104,7 @@ def generate_data_conversion_code(template_file_path: str, input_candidates: lis
         candidate_select_cols = input_candidates[i].cols_mapping.values()
         candidate_data = pd.read_csv(input_candidates[i].input_path)[candidate_select_cols]
         template_select_cols = input_candidates[i].cols_mapping.keys()
-        sample_template_data = pd.read_csv(template_file_path)[template_select_cols].head(2)
+        sample_template_data = pd.read_csv(template_file_path)[template_select_cols].head()
         candidate_data = candidate_data.rename(
             columns={v: k for k, v in input_candidates[i].cols_mapping.items()}
         )
@@ -107,7 +114,9 @@ def generate_data_conversion_code(template_file_path: str, input_candidates: lis
         print(f"sample_template_data: \n{sample_template_data}")
         text = DATA_CONVERSION_ASK_TEXT_TEMPLATE.substitute(
             to_data=sample_template_data,
+            to_dtypes=sample_template_data.dtypes,
             from_data=sample_candidate_data,
+            from_dtypes=sample_candidate_data.dtypes,
             function_name="convert_df"
         )
         openai.api_key = OPENAI_API_KEY

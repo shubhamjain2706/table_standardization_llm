@@ -5,7 +5,10 @@ import os
 import shutil
 
 app = Flask(__name__)
-app.secret_key = 'BAD_SECRET_KEY'
+# Details on the Secret Key: https://flask.palletsprojects.com/en/2.3.x/config/#SECRET_KEY
+# NOTE: The secret key is used to cryptographically-sign the cookies used for storing
+#       the session data.
+app.secret_key = 'SAMPLE_SESSION_KEY'
 
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
