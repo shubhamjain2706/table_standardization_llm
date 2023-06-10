@@ -69,24 +69,24 @@ def find_similar_cols_mapping(template_cols_string: str, input_candidates: list[
 
 # Step 3 : In case of ambiguous mapping, ask the user to choose the most suitable column from the candidates.
 # This method is only needed for CLI and not the web interface.
-def resolve_ambiguity(input_candidates: list[Candidate]) -> list[Candidate]:
-    for i in range(len(input_candidates)):
-        cols_mapping = input_candidates[i].cols_mapping
-        final_mapping = {}
-        for mapping_to, mapping_from in cols_mapping.items():
-            final_mapping_from = mapping_from[0] if type(mapping_from) == list else mapping_from  # default case
-            if type(mapping_from) == list and len(mapping_from) > 1:
-                print(f"Ambiguous mapping for column '{mapping_to}': {mapping_from}")
-                user_choice = input("Please choose the most suitable column: ")
-                if user_choice in mapping_from:
-                    final_mapping_from = user_choice
-                else:
-                    print(f"Invalid choice. Assigning default mapping for column '{mapping_to}'.")
-            final_mapping[mapping_to] = final_mapping_from
-        print(f"final_mapping for candidate {i} : {final_mapping}")
-        print()
-        input_candidates[i].cols_mapping = final_mapping
-    return input_candidates
+# def resolve_ambiguity(input_candidates: list[Candidate]) -> list[Candidate]:
+#     for i in range(len(input_candidates)):
+#         cols_mapping = input_candidates[i].cols_mapping
+#         final_mapping = {}
+#         for mapping_to, mapping_from in cols_mapping.items():
+#             final_mapping_from = mapping_from[0] if type(mapping_from) == list else mapping_from  # default case
+#             if type(mapping_from) == list and len(mapping_from) > 1:
+#                 print(f"Ambiguous mapping for column '{mapping_to}': {mapping_from}")
+#                 user_choice = input("Please choose the most suitable column: ")
+#                 if user_choice in mapping_from:
+#                     final_mapping_from = user_choice
+#                 else:
+#                     print(f"Invalid choice. Assigning default mapping for column '{mapping_to}'.")
+#             final_mapping[mapping_to] = final_mapping_from
+#         print(f"final_mapping for candidate {i} : {final_mapping}")
+#         print()
+#         input_candidates[i].cols_mapping = final_mapping
+#     return input_candidates
 
 
 # Step 4 : Automatically generate data mapping code for each column display in the final Template format. For
@@ -165,15 +165,3 @@ def transform_verify_save_data(input_candidates: list[Candidate]) -> list[Candid
         return input_candidates
     else:
         return None
-
-# This function is only required for CLI and not web interface
-def main_processor(template_file_path: str, input_candidate_file_paths: list[str]) -> list[str]:
-    print(f"template_file_path: {template_file_path}")
-    print(f"input_candidate_file_paths: {input_candidate_file_paths}")
-    template_cols_string, input_candidates = extract_cols_info(template_file_path, input_candidate_file_paths)
-    input_candidates = find_similar_cols_mapping(template_cols_string, input_candidates)
-    input_candidates = resolve_ambiguity(input_candidates)
-    input_candidates = generate_data_conversion_code(template_file_path, input_candidates)
-    input_candidates = transform_verify_save_data(input_candidates)
-    output_filenames = [x.output_path for x in input_candidates]
-    return output_filenames
