@@ -11,6 +11,7 @@ To access the project hosted on the server, go to: http://shubhamjain2706.python
 5. sample_files/{file}.csv: All csv files that can be used to test the code functionality.
 6. assignment_desc: contains the original assignment description.
 7. REAMDE.md: contains the description of the project
+8. how_to_run.mp4: example video showing working of 2 different test cases - 1 with single file conversion and another with multiple files conversion
 
 ## The workflow
 
