@@ -29,7 +29,7 @@ will misinform the LLM and it will try to write wrong code to convert the candid
 
 ## Possible improvements and edge cases handling
 
-1. Improved prompts: As these LLMs might get trained and redeployed overtime, our prompts might start giving different results. So it would always be better to have some kind of monitoring present to make sure our current prompts stays relevant.
+1. Improved prompts: As more variety of datasets might come in, our prompts might not give best results always. So it would always be better to have some kind of monitoring or a user-based feedback loop present to monitor the performance of our prompts and make sure they stay relevant according to our needs.
 2. Improved mappings: Apart from the above scenario, the prompts to the LLM in general also can be quite non-deterministic thus ending up affecting our columns mapping at times. The solution to tackle this would be to add more data when asking the LLM for mappings to allow it to understand the structure in a better manner to make it less error prone to wrong mappings.
 3. Sanity checks in the conversion code produced by LLM: We can improve our prompts when asking the LLM to add some sanity checks in the data conversion code so as to make it more robust.
 4. Pre/post-process data checks: Improving LLM prompts to allow for better handling of missing, incorrect values both in pre and post data in the conversion code.
