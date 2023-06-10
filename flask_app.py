@@ -12,17 +12,13 @@ OUTPUT_FOLDER = 'outputs'
 
 @app.route('/')
 def index():
-    mappings = session.get("mappings", {})
-    template_file_name = session.get("template_file_name", "")
-    return render_template('index.html', mappings=mappings, template_file_name=template_file_name)  
+    return render_template('index.html')  
 
 
 @app.route('/process', methods=['POST'])
 def process_files():
     template_file = request.files['templateFile']
     candidate_files = request.files.getlist('candidateFiles')
-
-    session.clear()
 
     # Create a unique folder to store the uploaded files
     upload_path = UPLOAD_FOLDER
@@ -55,11 +51,11 @@ def process_files():
         print("input_file: ", candidate.input_path.split("/")[-1])
     print("response: ", response)
 
-    # Save session vars
-    session["mappings"] = response
-    session["template_file_name"] = template_filename
+    final_response = {}
+    final_response["mappings"] = response
+    final_response["template_file_name"] = template_filename
 
-    return jsonify(response)
+    return jsonify(final_response)
 
 
 @app.route('/process_form', methods=['POST'])
@@ -148,7 +144,7 @@ def upload_and_convert():
     # Process the files
     input_candidates = transform_verify_save_data(candidates)
     if input_candidates is None:
-        return jsonify({'error': "Some error occurred while converting the data. Please try again with right mappings."}), 400
+        return jsonify({'error': "Some error occurred while converting the data. Please try again with right mappings. Please refresh the page and try again."}), 400
         
     response = {}
     for candidate in input_candidates:

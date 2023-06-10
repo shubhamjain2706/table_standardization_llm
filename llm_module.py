@@ -8,7 +8,7 @@ from classes import Candidate
 
 
 # Globals
-OPENAI_API_KEY = ""  # ADD YOUR KEY HERE
+OPENAI_API_KEY = ""  # ADD YOUR OPENAI API KEY HERE
 COLS_MAPPING_ASK_TEXT_TEMPLATE = Template(f"Find only the closest mapping of all column names in '$to_cols' and "
                                           f"'$from_cols' and not the code. In case of ambiguous mappings, "
                                           f"keep them all. Return valid JSON dict and nothing else, with key as "
@@ -105,11 +105,10 @@ def generate_data_conversion_code(template_file_path: str, input_candidates: lis
         print(f"sample_candidate_data: \n{sample_candidate_data}")
         print()
         print(f"sample_template_data: \n{sample_template_data}")
-        function_name = f"convert_candidate{i}_df"
         text = DATA_CONVERSION_ASK_TEXT_TEMPLATE.substitute(
             to_data=sample_template_data,
             from_data=sample_candidate_data,
-            function_name=function_name
+            function_name="convert_df"
         )
         openai.api_key = OPENAI_API_KEY
         llm = OpenAI(openai_api_key=openai.api_key, temperature=0.1)
@@ -134,16 +133,26 @@ def generate_data_conversion_code(template_file_path: str, input_candidates: lis
 
 # Step 5 : Check that all data has been transferred correctly; if any errors occur, issue an alert to the person.
 def transform_verify_save_data(input_candidates: list[Candidate]) -> list[Candidate]:
+    for i in range(len(input_candidates)):
+        print(f"input_candidates[{i}].input_path: ", input_candidates[i].input_path)
+        print(f"input_candidates[{i}].output_path: ", input_candidates[i].output_path)
+        print(f"input_candidates[{i}].cols_mapping: ", input_candidates[i].cols_mapping)
+        print(f"input_candidates[{i}].data_conversion_code: ", input_candidates[i].data_conversion_code)
+        print()
+        
     flag = 0
     for i in range(len(input_candidates)):
         candidate_select_cols = input_candidates[i].cols_mapping.values()
         candidate_data = pd.read_csv(input_candidates[i].input_path)[candidate_select_cols]
         candidate_data = candidate_data.rename(columns={v:k for k,v in input_candidates[i].cols_mapping.items()})
-        function_name = f"convert_candidate{i}_df"
         try:
             if input_candidates[i].data_conversion_code:
-                exec(input_candidates[i].data_conversion_code.strip())
-                converted_candidate_data = eval(f"{function_name}({candidate_data})")
+                function_string = input_candidates[i].data_conversion_code.strip()
+                compiled_code = compile(function_string, "<string>", "exec")
+                scope = {}
+                exec(compiled_code, scope)
+                function_name = function_string.split('(')[0].replace("def ", "").strip()
+                converted_candidate_data = scope[function_name](candidate_data)
                 print(converted_candidate_data.head())
                 converted_candidate_data.to_csv(input_candidates[i].output_path, index=False)
                 flag = 1
