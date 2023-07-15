@@ -1,4 +1,4 @@
-# Task_zero_llm_project
+# Table Standardization LLM
 
 To access the project hosted on the server, go to: http://shubhamjain2706.pythonanywhere.com/
 
